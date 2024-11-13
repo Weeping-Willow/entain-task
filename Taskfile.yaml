@@ -1,0 +1,47 @@
+version: '3'
+
+vars:
+  LOCAL_BIN: "{{.PWD}}/bin"
+
+tasks:
+  install-oapi:
+    desc: Install oapi for code generation from OpenAPI definitions
+    run: once
+    vars:
+      OAPI_CODEGEN_VERSION: v2.3.0
+    cmd: GOBIN={{.LOCAL_BIN}} go install -mod=mod github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@{{.OAPI_CODEGEN_VERSION}}
+    generates:
+      - ./bin/oapi-codegen
+
+  install-wire:
+    desc: Install wire for dependency injection
+    run: once
+    vars:
+      WIRE_VERSION: v0.6.0
+    cmd: GOBIN={{.LOCAL_BIN}} go install -mod=mod github.com/google/wire/cmd/wire@{{.WIRE_VERSION}}
+    generates:
+      - ./bin/wire
+
+  install-deps:
+    desc: Install dependencies for working with the project
+    run: once
+    deps:
+      - install-oapi
+      - install-wire
+
+  wire:
+    desc: Generate code for dependency injection
+    deps:
+      - install-wire
+    cmds:
+      - "{{.LOCAL_BIN}}/wire ./..."
+
+  oapi:
+    desc: Generate code from OpenAPI definitions
+    deps:
+      - install-oapi
+    sources:
+      - ./api/*.yaml
+    cmds:
+      - mkdir -p ./pkg/oapi/api/
+      - "{{.LOCAL_BIN}}/oapi-codegen -generate chi-server,types,strict-server -o ./pkg/oapi/api/api.gen.go ./api/spec.yaml"

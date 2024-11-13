@@ -1,0 +1,107 @@
+openapi: 3.0.0
+info:
+  title: Entain Test Task
+  version: 1.0.0
+
+paths:
+  /user/{userId}/transaction:
+    post:
+      summary: Update user balance
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+          x-oapi-codegen-extra-tags:
+            validate: "required,min=2"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+      responses:
+        '200':
+          description: Successful response
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /user/{userId}/balance:
+    get:
+      summary: Get user balance
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+          x-oapi-codegen-extra-tags:
+            validate: "required,min=2"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserBalance'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Transaction:
+      type: object
+      required:
+        - state
+        - amount
+        - transactionId
+      properties:
+        state:
+          type: string
+          enum: [win, lose]
+          x-oapi-codegen-extra-tags:
+            validate: "required,oneof=win lose"
+        amount:
+          type: string
+          pattern: ^\d+(\.\d{1,2})?$
+          x-oapi-codegen-extra-tags:
+            validate: "required,number"
+        transactionId:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: "required,max=256"
+
+    UserBalance:
+      type: object
+      required:
+        - userId
+        - balance
+      properties:
+        userId:
+          type: integer
+          format: int64
+          minimum: 1
+        balance:
+          type: string
+          pattern: ^\d+(\.\d{1,2})?$
+
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
