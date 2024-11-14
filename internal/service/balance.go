@@ -65,17 +65,10 @@ func (b *balance) PostNewTransaction(ctx context.Context, request spec.PostUserU
 			return 0, ErrNotEnoughBalance
 		}
 
-		userBalance -= transactionAmount
-	} else {
-		userBalance += transactionAmount
+		transactionAmount = transactionAmount * -1
 	}
 
-	err = b.balanceRepository.UpdateUserBalance(ctx, request.UserId, userBalance)
-	if err != nil {
-		return 0, errors.Wrap(err, "update user balance")
-	}
-
-	err = b.balanceRepository.NewTransaction(ctx, repository.UserTransactionEntity{
+	newBalance, err := b.balanceRepository.UpdateBalanceByAmount(ctx, request.UserId, transactionAmount, repository.UserTransactionEntity{
 		TransactionID: request.Body.TransactionId,
 		UserID:        request.UserId,
 		Amount:        transactionAmount,
@@ -83,10 +76,10 @@ func (b *balance) PostNewTransaction(ctx context.Context, request spec.PostUserU
 		SourceType:    string(request.Params.SourceType),
 	})
 	if err != nil {
-		return 0, errors.Wrap(err, "create new transaction")
+		return 0, errors.Wrap(err, "update user balance")
 	}
 
 	// remove user lock
 
-	return userBalance, nil
+	return newBalance, nil
 }

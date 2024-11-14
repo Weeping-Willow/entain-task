@@ -23,9 +23,8 @@ type UserTransactionEntity struct {
 
 type UserStorage interface {
 	GetUserBalance(ctx context.Context, userID uint64) (float64, error)
-	UpdateUserBalance(ctx context.Context, userID uint64, balance float64) error
-	NewTransaction(ctx context.Context, transaction UserTransactionEntity) error
 	CheckTransactionExists(ctx context.Context, transactionID string) (bool, error)
+	UpdateBalanceByAmount(ctx context.Context, userID uint64, amount float64, entity UserTransactionEntity) (float64, error)
 }
 
 type userStorage struct {
@@ -58,33 +57,6 @@ func (u *userStorage) GetUserBalance(ctx context.Context, userID uint64) (float6
 	return userBalance.Balance, nil
 }
 
-func (u *userStorage) NewTransaction(ctx context.Context, transaction UserTransactionEntity) error {
-	query := `INSERT INTO transactions (id,user_id, amount, state, source_type) VALUES ($1, $2, $3, $4, $5) RETURNING *`
-
-	err := u.db.QueryRowxContext(ctx, query, transaction.TransactionID, transaction.UserID, transaction.Amount,
-		transaction.State, transaction.SourceType).StructScan(&transaction)
-	if err != nil {
-		slog.Error("create new transaction", "error", err.Error())
-
-		return errors.Wrap(err, "create new transaction")
-	}
-
-	return nil
-}
-
-func (u *userStorage) UpdateUserBalance(ctx context.Context, userID uint64, balance float64) error {
-	query := `UPDATE users SET balance = $1 WHERE id = $2`
-
-	_, err := u.db.ExecContext(ctx, query, balance, userID)
-	if err != nil {
-		slog.Error("update user balance", "error", err.Error())
-
-		return errors.Wrap(err, "update user balance")
-	}
-
-	return nil
-}
-
 func (u *userStorage) CheckTransactionExists(ctx context.Context, transactionID string) (bool, error) {
 	query := `SELECT EXISTS(SELECT 1 FROM transactions WHERE id = $1)`
 
@@ -97,4 +69,67 @@ func (u *userStorage) CheckTransactionExists(ctx context.Context, transactionID 
 	}
 
 	return exists, nil
+}
+
+func (u *userStorage) UpdateBalanceByAmount(ctx context.Context, userID uint64, amount float64, entity UserTransactionEntity) (float64, error) {
+	tx, err := u.db.Beginx()
+	if err != nil {
+		return 0, errors.Wrap(err, "begin transaction")
+	}
+
+	err = u.addToUserBalance(ctx, tx, userID, amount)
+	if err != nil {
+		slog.Error("update user balance", "error", err.Error())
+		txErr := tx.Rollback()
+		if txErr != nil {
+			slog.Error("rollback transaction", "error", txErr.Error())
+		}
+
+		return 0, errors.Wrap(err, "update user balance")
+	}
+
+	err = u.newTransaction(ctx, tx, entity)
+	if err != nil {
+		slog.Error("create new transaction", "error", err.Error())
+		txErr := tx.Rollback()
+		if txErr != nil {
+			slog.Error("rollback transaction", "error", txErr.Error())
+		}
+
+		return 0, errors.Wrap(err, "create new transaction")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, errors.Wrap(err, "update balance transaction")
+	}
+
+	return u.GetUserBalance(ctx, userID)
+}
+
+func (u *userStorage) newTransaction(ctx context.Context, tx *sqlx.Tx, transaction UserTransactionEntity) error {
+	query := `INSERT INTO transactions (id,user_id, amount, state, source_type) VALUES ($1, $2, $3, $4, $5) RETURNING *`
+
+	err := tx.QueryRowxContext(ctx, query, transaction.TransactionID, transaction.UserID, transaction.Amount,
+		transaction.State, transaction.SourceType).StructScan(&transaction)
+	if err != nil {
+		slog.Error("create new transaction", "error", err.Error())
+
+		return errors.Wrap(err, "create new transaction")
+	}
+
+	return nil
+}
+
+func (u *userStorage) addToUserBalance(ctx context.Context, tx *sqlx.Tx, userID uint64, balance float64) error {
+	query := `UPDATE users SET balance = balance + $1 WHERE id = $2`
+
+	_, err := tx.ExecContext(ctx, query, balance, userID)
+	if err != nil {
+		slog.Error("update user balance", "error", err.Error())
+
+		return errors.Wrap(err, "update user balance")
+	}
+
+	return nil
 }
