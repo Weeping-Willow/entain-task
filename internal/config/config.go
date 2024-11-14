@@ -1,6 +1,8 @@
 package config
 
 import (
+	"log/slog"
+
 	"github.com/kelseyhightower/envconfig"
 	"github.com/pkg/errors"
 )
@@ -16,5 +18,6 @@ func New() (Config, error) {
 		return Config{}, errors.Wrap(err, "load config")
 	}
 
+	slog.Info("Config loaded", "config", cfg)
 	return cfg, nil
 }

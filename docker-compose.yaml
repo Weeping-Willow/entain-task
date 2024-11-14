@@ -1,6 +1,21 @@
 version: "3.0"
 
 services:
+  entail-api:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+    ports:
+      - "9000:8080"
+    command: "/app"
+    environment:
+      HTTP_PORT: 8080
+    depends_on:
+      - postgres
+      - migrate
+    networks:
+      - entail
+
   postgres:
     image: postgres:13
     environment:

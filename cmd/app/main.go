@@ -43,6 +43,8 @@ func NewApp(apiServer *api.Server) *App {
 }
 
 func (app *App) Start() {
+	slog.Info("Starting app")
+
 	err := app.api.Start()
 	if err != nil {
 		slog.Error(err.Error())
@@ -51,6 +53,8 @@ func (app *App) Start() {
 }
 
 func (app *App) Stop() {
+	slog.Info("Stopping app")
+
 	err := app.api.Stop()
 	if err != nil {
 		slog.Error(err.Error())
