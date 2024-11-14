@@ -14,9 +14,7 @@ paths:
           schema:
             type: integer
             format: int64
-            minimum: 1
-          x-oapi-codegen-extra-tags:
-            validate: "required,min=2"
+            minimum: 0
       requestBody:
         required: true
         content:
@@ -43,9 +41,7 @@ paths:
           schema:
             type: integer
             format: int64
-            minimum: 1
-          x-oapi-codegen-extra-tags:
-            validate: "required,min=2"
+            minimum: 0
       responses:
         '200':
           description: Successful response

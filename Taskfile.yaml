@@ -22,12 +22,22 @@ tasks:
     generates:
       - ./bin/wire
 
+  install-migrate:
+    desc: Install migrate for database migrations
+    run: once
+    vars:
+      MIGRATE_VERSION: v4.14.1
+    cmd: GOBIN={{.LOCAL_BIN}} go install -mod=mod github.com/golang-migrate/migrate/v4/cmd/migrate@{{.MIGRATE_VERSION}}
+    generates:
+      - ./bin/migrate
+
   install-deps:
     desc: Install dependencies for working with the project
     run: once
     deps:
       - install-oapi
       - install-wire
+      - install-migrate
 
   wire:
     desc: Generate code for dependency injection

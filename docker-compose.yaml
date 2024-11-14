@@ -1,0 +1,33 @@
+version: "3.0"
+
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: entail
+      POSTGRES_PASSWORD: entail
+      POSTGRES_DB: entail
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - entail
+
+  migrate:
+    image: migrate/migrate:v4.14.1
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations
+    networks:
+      - entail
+    command: ["-path", "/migrations", "-database", "postgres://entail:entail@postgres:5432/entail?sslmode=disable", "up"]
+
+networks:
+    entail:
+        driver: bridge
