@@ -1,5 +1,5 @@
 DO $$ BEGIN
-    CREATE TYPE transaction_state AS ENUM ('win', 'loss');
+    CREATE TYPE transaction_state AS ENUM ('win', 'lose');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;

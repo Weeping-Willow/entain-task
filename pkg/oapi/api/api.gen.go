@@ -336,12 +336,13 @@ type PostUserUserIdTransactionResponseObject interface {
 	VisitPostUserUserIdTransactionResponse(w http.ResponseWriter) error
 }
 
-type PostUserUserIdTransaction200Response struct {
-}
+type PostUserUserIdTransaction200JSONResponse UserBalance
 
-func (response PostUserUserIdTransaction200Response) VisitPostUserUserIdTransactionResponse(w http.ResponseWriter) error {
+func (response PostUserUserIdTransaction200JSONResponse) VisitPostUserUserIdTransactionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type PostUserUserIdTransactiondefaultJSONResponse struct {

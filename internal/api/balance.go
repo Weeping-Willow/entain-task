@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"log/slog"
-	"net/http"
 	"strconv"
 
 	spec "github.com/Weeping-Willow/entain-task/pkg/oapi/api"
@@ -27,10 +26,13 @@ func (a *Server) PostUserUserIdTransaction(ctx context.Context, request spec.Pos
 		return nil, err
 	}
 
-	return spec.PostUserUserIdTransactiondefaultJSONResponse{
-		Body: spec.Error{
-			Message: "Not implemented",
-		},
-		StatusCode: http.StatusInternalServerError,
+	newBalance, err := a.balanceService.PostNewTransaction(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return spec.PostUserUserIdTransaction200JSONResponse{
+		UserId:  request.UserId,
+		Balance: strconv.FormatFloat(newBalance, 'f', 2, 64),
 	}, nil
 }
