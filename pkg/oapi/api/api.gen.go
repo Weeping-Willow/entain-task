@@ -20,6 +20,13 @@ const (
 	Win  TransactionState = "win"
 )
 
+// Defines values for PostUserUserIdTransactionParamsSourceType.
+const (
+	Game    PostUserUserIdTransactionParamsSourceType = "game"
+	Payment PostUserUserIdTransactionParamsSourceType = "payment"
+	Server  PostUserUserIdTransactionParamsSourceType = "server"
+)
+
 // Error defines model for Error.
 type Error struct {
 	Message string `json:"message"`
@@ -38,8 +45,16 @@ type TransactionState string
 // UserBalance defines model for UserBalance.
 type UserBalance struct {
 	Balance string `json:"balance"`
-	UserId  int64  `json:"userId"`
+	UserId  uint64 `json:"userId"`
 }
+
+// PostUserUserIdTransactionParams defines parameters for PostUserUserIdTransaction.
+type PostUserUserIdTransactionParams struct {
+	SourceType PostUserUserIdTransactionParamsSourceType `json:"Source-Type" validate:"required,oneof=game server payment"`
+}
+
+// PostUserUserIdTransactionParamsSourceType defines parameters for PostUserUserIdTransaction.
+type PostUserUserIdTransactionParamsSourceType string
 
 // PostUserUserIdTransactionJSONRequestBody defines body for PostUserUserIdTransaction for application/json ContentType.
 type PostUserUserIdTransactionJSONRequestBody = Transaction
@@ -48,10 +63,10 @@ type PostUserUserIdTransactionJSONRequestBody = Transaction
 type ServerInterface interface {
 	// Get user balance
 	// (GET /user/{userId}/balance)
-	GetUserUserIdBalance(w http.ResponseWriter, r *http.Request, userId int64)
+	GetUserUserIdBalance(w http.ResponseWriter, r *http.Request, userId uint64)
 	// Update user balance
 	// (POST /user/{userId}/transaction)
-	PostUserUserIdTransaction(w http.ResponseWriter, r *http.Request, userId int64)
+	PostUserUserIdTransaction(w http.ResponseWriter, r *http.Request, userId uint64, params PostUserUserIdTransactionParams)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -60,13 +75,13 @@ type Unimplemented struct{}
 
 // Get user balance
 // (GET /user/{userId}/balance)
-func (_ Unimplemented) GetUserUserIdBalance(w http.ResponseWriter, r *http.Request, userId int64) {
+func (_ Unimplemented) GetUserUserIdBalance(w http.ResponseWriter, r *http.Request, userId uint64) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update user balance
 // (POST /user/{userId}/transaction)
-func (_ Unimplemented) PostUserUserIdTransaction(w http.ResponseWriter, r *http.Request, userId int64) {
+func (_ Unimplemented) PostUserUserIdTransaction(w http.ResponseWriter, r *http.Request, userId uint64, params PostUserUserIdTransactionParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -86,7 +101,7 @@ func (siw *ServerInterfaceWrapper) GetUserUserIdBalance(w http.ResponseWriter, r
 	var err error
 
 	// ------------- Path parameter "userId" -------------
-	var userId int64
+	var userId uint64
 
 	err = runtime.BindStyledParameterWithOptions("simple", "userId", chi.URLParam(r, "userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -112,7 +127,7 @@ func (siw *ServerInterfaceWrapper) PostUserUserIdTransaction(w http.ResponseWrit
 	var err error
 
 	// ------------- Path parameter "userId" -------------
-	var userId int64
+	var userId uint64
 
 	err = runtime.BindStyledParameterWithOptions("simple", "userId", chi.URLParam(r, "userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -120,8 +135,36 @@ func (siw *ServerInterfaceWrapper) PostUserUserIdTransaction(w http.ResponseWrit
 		return
 	}
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PostUserUserIdTransactionParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "Source-Type" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Source-Type")]; found {
+		var SourceType PostUserUserIdTransactionParamsSourceType
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Source-Type", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Source-Type", valueList[0], &SourceType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Source-Type", Err: err})
+			return
+		}
+
+		params.SourceType = SourceType
+
+	} else {
+		err := fmt.Errorf("Header parameter Source-Type is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "Source-Type", Err: err})
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PostUserUserIdTransaction(w, r, userId)
+		siw.Handler.PostUserUserIdTransaction(w, r, userId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -255,7 +298,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 }
 
 type GetUserUserIdBalanceRequestObject struct {
-	UserId int64 `json:"userId"`
+	UserId uint64 `json:"userId"`
 }
 
 type GetUserUserIdBalanceResponseObject interface {
@@ -284,7 +327,8 @@ func (response GetUserUserIdBalancedefaultJSONResponse) VisitGetUserUserIdBalanc
 }
 
 type PostUserUserIdTransactionRequestObject struct {
-	UserId int64 `json:"userId"`
+	UserId uint64 `json:"userId"`
+	Params PostUserUserIdTransactionParams
 	Body   *PostUserUserIdTransactionJSONRequestBody
 }
 
@@ -352,7 +396,7 @@ type strictHandler struct {
 }
 
 // GetUserUserIdBalance operation middleware
-func (sh *strictHandler) GetUserUserIdBalance(w http.ResponseWriter, r *http.Request, userId int64) {
+func (sh *strictHandler) GetUserUserIdBalance(w http.ResponseWriter, r *http.Request, userId uint64) {
 	var request GetUserUserIdBalanceRequestObject
 
 	request.UserId = userId
@@ -378,10 +422,11 @@ func (sh *strictHandler) GetUserUserIdBalance(w http.ResponseWriter, r *http.Req
 }
 
 // PostUserUserIdTransaction operation middleware
-func (sh *strictHandler) PostUserUserIdTransaction(w http.ResponseWriter, r *http.Request, userId int64) {
+func (sh *strictHandler) PostUserUserIdTransaction(w http.ResponseWriter, r *http.Request, userId uint64, params PostUserUserIdTransactionParams) {
 	var request PostUserUserIdTransactionRequestObject
 
 	request.UserId = userId
+	request.Params = params
 
 	var body PostUserUserIdTransactionJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {

@@ -36,7 +36,7 @@ func (a *Server) PostUserUserIdTransaction(ctx context.Context, request spec.Pos
 		}, nil
 	}
 
-	if err := a.validator.Struct(request.Body); err != nil {
+	if err := a.validator.Struct(request); err != nil {
 		slog.Error(err.Error())
 		return spec.PostUserUserIdTransactiondefaultJSONResponse{
 			Body: spec.Error{
