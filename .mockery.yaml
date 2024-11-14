@@ -1,0 +1,14 @@
+with-expecter: true
+quiet: False
+disable-version-string: True
+mockname: "Mock{{.InterfaceName}}"
+filename: "{{.MockName}}.go"
+dir: "{{.InterfaceDir}}/mocks/{{.InterfaceName}}"
+outpkg: "mock{{.InterfaceName}}"
+packages:
+  github.com/Weeping-Willow/entain-task/internal/repository:
+    interfaces:
+      UserStorage:
+  github.com/Weeping-Willow/entain-task/internal/service:
+    interfaces:
+      Balance:

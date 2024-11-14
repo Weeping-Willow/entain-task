@@ -4,11 +4,17 @@ import (
 	"log/slog"
 
 	"github.com/kelseyhightower/envconfig"
+	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 )
 
 type Config struct {
-	HTTPPort uint `envconfig:"HTTP_PORT" default:"8080"`
+	HTTPPort         uint   `envconfig:"HTTP_PORT" default:"8080"`
+	PostgresHost     string `envconfig:"POSTGRES_HOST"`
+	PostgresPort     uint   `envconfig:"POSTGRES_PORT"`
+	PostgresUser     string `envconfig:"POSTGRES_USER"`
+	PostgresPassword string `envconfig:"POSTGRES_PASSWORD"`
+	PostgresDB       string `envconfig:"POSTGRES_DB"`
 }
 
 func New() (Config, error) {

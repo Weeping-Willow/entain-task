@@ -31,6 +31,15 @@ tasks:
     generates:
       - ./bin/migrate
 
+  install-mockery:
+    desc: Install mockery for mocking interfaces
+    run: once
+    vars:
+      MOCKERY_VERSION: v2.46.3
+    cmd: GOBIN={{.LOCAL_BIN}} go install -mod=mod github.com/vektra/mockery/v2@{{.MOCKERY_VERSION}}
+    generates:
+      - ./bin/mockery
+
   install-deps:
     desc: Install dependencies for working with the project
     run: once
@@ -38,6 +47,17 @@ tasks:
       - install-oapi
       - install-wire
       - install-migrate
+      - install-mockery
+
+  up:
+    desc: Run the project
+    cmds:
+      - docker compose up -d
+
+  up-build:
+    desc: Run the project with build
+    cmds:
+      - docker compose up -d --no-deps --build api
 
   wire:
     desc: Generate code for dependency injection
@@ -45,6 +65,13 @@ tasks:
       - install-wire
     cmds:
       - "{{.LOCAL_BIN}}/wire ./..."
+
+  mocks:
+    desc: Generate mocks for interfaces
+    deps:
+      - install-mockery
+    cmds:
+      - "{{.LOCAL_BIN}}/mockery --all"
 
   oapi:
     desc: Generate code from OpenAPI definitions

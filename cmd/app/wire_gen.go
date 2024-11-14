@@ -9,6 +9,8 @@ package main
 import (
 	"github.com/Weeping-Willow/entain-task/internal/api"
 	"github.com/Weeping-Willow/entain-task/internal/config"
+	"github.com/Weeping-Willow/entain-task/internal/repository"
+	"github.com/Weeping-Willow/entain-task/internal/service"
 )
 
 // Injectors from wire.go:
@@ -18,7 +20,13 @@ func InitializeApp() (*App, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	server := api.New(configConfig)
+	db, err := config.NewDB(configConfig)
+	if err != nil {
+		return nil, nil, err
+	}
+	balance := repository.NewUserStorage(db)
+	serviceBalance := service.NewBalance(balance)
+	server := api.New(configConfig, serviceBalance)
 	app := NewApp(server)
 	return app, func() {
 	}, nil

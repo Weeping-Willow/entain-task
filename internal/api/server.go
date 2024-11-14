@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/Weeping-Willow/entain-task/internal/config"
+	"github.com/Weeping-Willow/entain-task/internal/service"
 )
 
 const (
@@ -20,11 +21,14 @@ const (
 type Server struct {
 	httpServer *http.Server
 	validator  *validator.Validate
+
+	balanceService service.Balance
 }
 
-func New(cfg config.Config) *Server {
+func New(cfg config.Config, balanceService service.Balance) *Server {
 	api := &Server{
-		validator: validator.New(validator.WithRequiredStructEnabled()),
+		validator:      validator.New(validator.WithRequiredStructEnabled()),
+		balanceService: balanceService,
 	}
 	api.httpServer = newHTTPServer(cfg.HTTPPort, api.NewRouter())
 

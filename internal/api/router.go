@@ -30,7 +30,10 @@ func (a *Server) NewRouter() chi.Router {
 		ResponseErrorHandlerFunc: responseErrorHandler,
 	})
 
-	spec.HandlerFromMux(strictHandler, r)
+	spec.HandlerWithOptions(strictHandler, spec.ChiServerOptions{
+		BaseRouter:       r,
+		ErrorHandlerFunc: responseErrorHandler,
+	})
 
 	return r
 }
