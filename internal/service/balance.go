@@ -20,9 +20,9 @@ type balance struct {
 }
 
 var (
-	ErrParseTransactionAmount   = errors.New("parse transaction amount")
 	ErrTransactionAlreadyExists = errors.New("transaction already exists")
 	ErrNotEnoughBalance         = errors.New("not enough balance")
+	ErrInvalidAmount            = errors.New("invalid amount")
 )
 
 func NewBalance(balanceRepository repository.UserStorage) Balance {
@@ -38,9 +38,6 @@ func (b *balance) GetUserBalance(ctx context.Context, userID uint64) (float64, e
 }
 
 func (b *balance) PostNewTransaction(ctx context.Context, request spec.PostUserUserIdTransactionRequestObject) (float64, error) {
-	// Lock Transaction
-	// Lock User Balance update
-
 	userBalance, err := b.GetUserBalance(ctx, request.UserId)
 	if err != nil {
 		return 0, err
@@ -57,18 +54,20 @@ func (b *balance) PostNewTransaction(ctx context.Context, request spec.PostUserU
 
 	transactionAmount, err := strconv.ParseFloat(request.Body.Amount, 64)
 	if err != nil {
-		return 0, ErrParseTransactionAmount
+		return 0, ErrInvalidAmount
 	}
+
+	newTransactionAmount := transactionAmount
 
 	if request.Body.State == spec.Lose {
 		if userBalance < transactionAmount {
 			return 0, ErrNotEnoughBalance
 		}
 
-		transactionAmount = transactionAmount * -1
+		newTransactionAmount = transactionAmount * -1
 	}
 
-	newBalance, err := b.balanceRepository.UpdateBalanceByAmount(ctx, request.UserId, transactionAmount, repository.UserTransactionEntity{
+	newBalance, err := b.balanceRepository.UpdateBalanceByAmount(ctx, request.UserId, newTransactionAmount, repository.UserTransactionEntity{
 		TransactionID: request.Body.TransactionId,
 		UserID:        request.UserId,
 		Amount:        transactionAmount,
@@ -78,8 +77,6 @@ func (b *balance) PostNewTransaction(ctx context.Context, request spec.PostUserU
 	if err != nil {
 		return 0, errors.Wrap(err, "update user balance")
 	}
-
-	// remove user lock
 
 	return newBalance, nil
 }

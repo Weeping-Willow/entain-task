@@ -86,7 +86,7 @@ components:
           type: string
           pattern: ^\d+(\.\d{1,2})?$
           x-oapi-codegen-extra-tags:
-            validate: "required,number"
+            validate: "required,numeric"
         transactionId:
           type: string
           x-oapi-codegen-extra-tags:

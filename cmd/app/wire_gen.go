@@ -20,14 +20,15 @@ func InitializeApp() (*App, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	db, err := config.NewDB(configConfig)
+	db, cleanup, err := config.NewDB(configConfig)
 	if err != nil {
 		return nil, nil, err
 	}
-	balance := repository.NewUserStorage(db)
-	serviceBalance := service.NewBalance(balance)
-	server := api.New(configConfig, serviceBalance)
+	userStorage := repository.NewUserStorage(db)
+	balance := service.NewBalance(userStorage)
+	server := api.New(configConfig, balance)
 	app := NewApp(server)
 	return app, func() {
+		cleanup()
 	}, nil
 }

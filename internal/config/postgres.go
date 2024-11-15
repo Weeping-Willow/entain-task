@@ -7,18 +7,22 @@ import (
 	"github.com/pkg/errors"
 )
 
-func NewDB(cfg Config) (*sqlx.DB, error) {
+func NewDB(cfg Config) (*sqlx.DB, func(), error) {
 	db, err := sqlx.Connect("postgres", newPostgresDBConnectionString(cfg))
 	if err != nil {
-		return nil, errors.Wrap(err, "connect to postgres db")
+		return nil, func() {}, errors.Wrap(err, "connect to postgres db")
 	}
 
 	err = db.Ping()
 	if err != nil {
-		return nil, errors.Wrap(err, "ping to postgres db")
+		return nil, func() {
+			db.Close()
+		}, errors.Wrap(err, "ping to postgres db")
 	}
 
-	return db, nil
+	return db, func() {
+		db.Close()
+	}, nil
 }
 
 func newPostgresDBConnectionString(cfg Config) string {

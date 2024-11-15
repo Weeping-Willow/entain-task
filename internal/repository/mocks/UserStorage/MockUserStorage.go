@@ -5,6 +5,7 @@ package mockUserStorage
 import (
 	context "context"
 
+	repository "github.com/Weeping-Willow/entain-task/internal/repository"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -21,13 +22,62 @@ func (_m *MockUserStorage) EXPECT() *MockUserStorage_Expecter {
 	return &MockUserStorage_Expecter{mock: &_m.Mock}
 }
 
+// CheckTransactionExists provides a mock function with given fields: ctx, transactionID
+func (_m *MockUserStorage) CheckTransactionExists(ctx context.Context, transactionID string) (bool, error) {
+	ret := _m.Called(ctx, transactionID)
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (bool, error)); ok {
+		return rf(ctx, transactionID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = rf(ctx, transactionID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, transactionID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUserStorage_CheckTransactionExists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckTransactionExists'
+type MockUserStorage_CheckTransactionExists_Call struct {
+	*mock.Call
+}
+
+// CheckTransactionExists is a helper method to define mock.On call
+//   - ctx context.Context
+//   - transactionID string
+func (_e *MockUserStorage_Expecter) CheckTransactionExists(ctx interface{}, transactionID interface{}) *MockUserStorage_CheckTransactionExists_Call {
+	return &MockUserStorage_CheckTransactionExists_Call{Call: _e.mock.On("CheckTransactionExists", ctx, transactionID)}
+}
+
+func (_c *MockUserStorage_CheckTransactionExists_Call) Run(run func(ctx context.Context, transactionID string)) *MockUserStorage_CheckTransactionExists_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockUserStorage_CheckTransactionExists_Call) Return(_a0 bool, _a1 error) *MockUserStorage_CheckTransactionExists_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUserStorage_CheckTransactionExists_Call) RunAndReturn(run func(context.Context, string) (bool, error)) *MockUserStorage_CheckTransactionExists_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetUserBalance provides a mock function with given fields: ctx, userID
 func (_m *MockUserStorage) GetUserBalance(ctx context.Context, userID uint64) (float64, error) {
 	ret := _m.Called(ctx, userID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetUserBalance")
-	}
 
 	var r0 float64
 	var r1 error
@@ -74,6 +124,61 @@ func (_c *MockUserStorage_GetUserBalance_Call) Return(_a0 float64, _a1 error) *M
 }
 
 func (_c *MockUserStorage_GetUserBalance_Call) RunAndReturn(run func(context.Context, uint64) (float64, error)) *MockUserStorage_GetUserBalance_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateBalanceByAmount provides a mock function with given fields: ctx, userID, amount, entity
+func (_m *MockUserStorage) UpdateBalanceByAmount(ctx context.Context, userID uint64, amount float64, entity repository.UserTransactionEntity) (float64, error) {
+	ret := _m.Called(ctx, userID, amount, entity)
+
+	var r0 float64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint64, float64, repository.UserTransactionEntity) (float64, error)); ok {
+		return rf(ctx, userID, amount, entity)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uint64, float64, repository.UserTransactionEntity) float64); ok {
+		r0 = rf(ctx, userID, amount, entity)
+	} else {
+		r0 = ret.Get(0).(float64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uint64, float64, repository.UserTransactionEntity) error); ok {
+		r1 = rf(ctx, userID, amount, entity)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUserStorage_UpdateBalanceByAmount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateBalanceByAmount'
+type MockUserStorage_UpdateBalanceByAmount_Call struct {
+	*mock.Call
+}
+
+// UpdateBalanceByAmount is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uint64
+//   - amount float64
+//   - entity repository.UserTransactionEntity
+func (_e *MockUserStorage_Expecter) UpdateBalanceByAmount(ctx interface{}, userID interface{}, amount interface{}, entity interface{}) *MockUserStorage_UpdateBalanceByAmount_Call {
+	return &MockUserStorage_UpdateBalanceByAmount_Call{Call: _e.mock.On("UpdateBalanceByAmount", ctx, userID, amount, entity)}
+}
+
+func (_c *MockUserStorage_UpdateBalanceByAmount_Call) Run(run func(ctx context.Context, userID uint64, amount float64, entity repository.UserTransactionEntity)) *MockUserStorage_UpdateBalanceByAmount_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint64), args[2].(float64), args[3].(repository.UserTransactionEntity))
+	})
+	return _c
+}
+
+func (_c *MockUserStorage_UpdateBalanceByAmount_Call) Return(_a0 float64, _a1 error) *MockUserStorage_UpdateBalanceByAmount_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUserStorage_UpdateBalanceByAmount_Call) RunAndReturn(run func(context.Context, uint64, float64, repository.UserTransactionEntity) (float64, error)) *MockUserStorage_UpdateBalanceByAmount_Call {
 	_c.Call.Return(run)
 	return _c
 }

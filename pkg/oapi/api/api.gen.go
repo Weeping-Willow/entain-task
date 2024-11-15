@@ -34,7 +34,7 @@ type Error struct {
 
 // Transaction defines model for Transaction.
 type Transaction struct {
-	Amount        string           `json:"amount" validate:"required,number"`
+	Amount        string           `json:"amount" validate:"required,numeric"`
 	State         TransactionState `json:"state" validate:"required,oneof=win lose"`
 	TransactionId string           `json:"transactionId" validate:"required,max=256"`
 }
